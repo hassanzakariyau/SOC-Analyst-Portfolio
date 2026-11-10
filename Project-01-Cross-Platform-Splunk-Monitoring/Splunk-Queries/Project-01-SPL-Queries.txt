@@ -1,0 +1,41 @@
+PROJECT 1 — SPL QUERIES
+
+1. Windows Successful Logons
+   index=* EventCode=4624
+   | table _time host user Logon_Type Source_Network_Address
+
+2. Windows Failed Logons
+   index=* EventCode=4625
+   | table _time host Account_Name Logon_Type Source_Network_Address
+
+3. Windows Privileged Logons
+   index=* EventCode=4672
+   | table _time host Account_Name SubjectUserName PrivilegeList
+   | sort -_time
+   | head 20
+
+4. Windows Process Creation
+   index=* EventCode=4688
+   | table _time host Account_Name New_Process_Name Creator_Process_Name Process_Command_Line
+   | sort -_time
+   | head 20
+
+5. Linux Invalid SSH Users
+   index=* "Invalid user"
+   | rex "Invalid user (?<attempted_user>\S+) from (?<src_ip>\S+)"
+   | stats count by attempted_user, src_ip, host
+
+6. Linux Failed SSH Authentication
+   index=* ("Invalid user" OR "Failed password")
+   | timechart span=1h count
+
+7. Linux Successful SSH Authentication
+   index=* sourcetype=syslog "Accepted"
+   | table _time host source _raw
+   | sort -_time
+   | head 20
+
+8. Cross-Platform Authentication Activity
+   index=* (EventCode=4624 OR EventCode=4625 OR "Accepted" OR "Failed password" OR "Invalid user")
+   | eval platform=if(isnotnull(EventCode),"Windows","Linux")
+   | timechart span=1h count by platform
