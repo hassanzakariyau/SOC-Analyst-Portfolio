@@ -45,4 +45,4 @@ Project Files
 - Evidence: screenshots of investigation and alert results
 - Reports: investigation report
 - Splunk-Queries: detection and investigation SPL
-- 
+  
