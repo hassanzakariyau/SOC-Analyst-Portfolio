@@ -1,0 +1,206 @@
+CROSS-PLATFORM SECURITY MONITORING WITH SPLUNK
+
+
+1. Project Overview
+
+This project demonstrates the use of Splunk Enterprise as a Security Information and Event Management (SIEM) platform to monitor and investigate security events across Windows and Linux environments.
+
+The project focuses on authentication activity, privileged logons, process execution, and suspicious login behaviour. It demonstrates practical SOC Level 1 skills in log collection, event analysis, threat detection, and security monitoring.
+
+2. Project Objectives
+
+- Collect and analyze Windows Security Event Logs.
+- Monitor Linux authentication and system logs.
+- Identify successful and failed authentication attempts.
+- Investigate privileged logon activity.
+- Monitor Windows process creation.
+- Use Search Processing Language (SPL) to investigate security events.
+- Build a centralized dashboard for cross-platform monitoring.
+- Identify suspicious patterns and recommend appropriate security actions.
+
+3. Lab Environment
+
+Component| Environment
+Operating system| Windows 11 Pro
+Linux environment| Ubuntu on WSL
+SIEM platform| Splunk Enterprise
+Windows data source| Windows Security Event Logs
+Linux data source| Linux authentication and system logs
+Investigation tools| Splunk Search & Reporting, PowerShell, Linux CLI
+
+
+4. Security Monitoring and Investigation Activities
+
+4.1 Windows Successful Logon Monitoring
+
+Event ID: 4624
+
+Monitored successful Windows authentication events using Splunk.
+
+The investigation examined timestamps, host information, account names, logon types, and source network addresses.
+
+Security relevance: Helps identify unexpected account access, unusual logon types, and potentially compromised accounts.
+
+4.2 Linux SSH Authentication Investigation
+
+Investigated Linux SSH authentication activity using Ubuntu authentication logs and Splunk.
+
+A controlled authentication attempt was generated using a nonexistent account ("fakeuser").
+
+Finding: An invalid-user authentication attempt was recorded, with the source address shown as "127.0.0.1".
+
+Security relevance: Invalid-user attempts can indicate account enumeration, automated scanning, or unauthorized access attempts.
+
+Lab limitation: This was a controlled local test, not an attack originating from an external system.
+
+4.3 Windows Failed Logon Monitoring
+
+Event ID: 4625
+
+Generated a controlled failed authentication attempt using a nonexistent Windows account.
+
+Verified the resulting Windows Security Event and located it in Splunk.
+
+Security relevance: Failed logons can indicate incorrect credentials, password guessing, or brute-force activity. Repeated failures should be investigated alongside account and source information.
+
+4.4 Windows Privileged Logon Monitoring
+
+Event ID: 4672
+
+Monitored events indicating that sensitive privileges were assigned to a new logon.
+
+Observed accounts included "HomePC" and "SYSTEM".
+
+Security relevance: Privileged activity should be reviewed to identify unexpected administrative access or misuse of elevated permissions.
+
+Investigation consideration: Event 4672 does not automatically indicate malicious activity. The account, assigned privileges, and surrounding events must be examined.
+
+4.5 Windows Process Creation Monitoring
+
+Event ID: 4688
+
+Monitored process creation activity and examined:
+
+- Account associated with the process.
+- New process name.
+- Creator process name.
+- Process command line.
+
+Observed processes included Splunk-related executables.
+
+Security relevance: Process creation monitoring helps analysts identify suspicious executables, unusual parent-child process relationships, and potentially malicious command-line activity.
+
+4.6 Linux Successful SSH Authentication
+
+Investigated successful SSH authentication records in Ubuntu and Splunk.
+
+The investigation focused on successful authentication messages and the associated user, source address, and timestamp.
+
+Security relevance: Successful authentication from unexpected sources or at unusual times may require further investigation.
+
+
+Splunk Search Queries
+
+The following SPL searches were used during the project.
+
+Windows successful logons
+
+index=* EventCode=4624
+| table _time host user Logon_Type Source_Network_Address
+
+Windows failed logons
+
+index=* EventCode=4625
+| table _time host Account_Name Logon_Type Source_Network_Address
+
+Windows privileged logons
+
+index=* EventCode=4672
+| table _time host Account_Name SubjectUserName PrivilegeList
+| sort -_time
+| head 20
+
+Windows process creation
+
+index=* EventCode=4688
+| table _time host Account_Name New_Process_Name Creator_Process_Name Process_Command_Line
+| sort -_time
+| head 20
+
+Linux invalid SSH users
+
+index=* "Invalid user"
+| rex "Invalid user (?<attempted_user>\S+) from (?<src_ip>\S+)"
+| stats count by attempted_user, src_ip, host
+
+Linux failed SSH authentication
+
+index=* ("Invalid user" OR "Failed password")
+| timechart span=1h count
+
+Linux successful SSH authentication
+
+index=* sourcetype=syslog "Accepted"
+| table _time host source _raw
+| sort -_time
+| head 20
+
+
+6. Cross-Platform SOC Monitoring Dashboard
+
+Created a Classic Splunk Dashboard titled Cross-Platform SOC Monitoring.
+
+The dashboard contains seven panels:
+
+1. Windows Successful Logons
+2. Windows Failed Logons
+3. Windows Privileged Logons
+4. Windows Process Creation
+5. Linux Failed SSH Authentication
+6. Linux Successful SSH Authentication
+7. Cross-Platform Authentication Activity
+
+The dashboard provides a centralized view of authentication activity and selected security events across both operating systems.
+
+7. Security Recommendations
+
+Based on the monitoring activities, the following recommendations are appropriate:
+
+- Investigate repeated failed authentication attempts.
+- Review successful logons from unexpected sources.
+- Monitor privileged account activity.
+- Investigate suspicious process execution and unusual parent-child relationships.
+- Correlate authentication events across Windows and Linux.
+- Maintain centralized log collection and regular dashboard reviews.
+- Escalate confirmed or unexplained suspicious activity for further investigation.
+
+8. Skills Demonstrated
+
+- SIEM configuration and log collection.
+- Splunk Enterprise administration basics.
+- Search Processing Language (SPL).
+- Windows Security Event Log analysis.
+- Linux authentication log analysis.
+- Authentication monitoring.
+- Privileged activity monitoring.
+- Process creation investigation.
+- Security dashboard development.
+- Basic SOC investigation and reporting.
+
+9. Conclusion
+
+This project provided practical experience in monitoring Windows and Linux security events through Splunk Enterprise.
+
+It demonstrated how a SOC analyst can collect logs, investigate authentication activity, monitor privileged access, examine process execution, and present security information through a centralized dashboard.
+
+The project establishes a foundation for further SOC investigations involving brute-force attempts, suspicious PowerShell activity, malware detection, and incident response.
+
+---
+
+Project classification: Defensive Security / SOC Level 1
+
+Primary tool: Splunk Enterprise
+
+Environment: Windows 11 Pro and Ubuntu (WSL)
+
+Project status: Evidence collection and dashboard development completed; final validation and portfolio packaging pending.
