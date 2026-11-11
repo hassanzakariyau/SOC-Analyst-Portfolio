@@ -1,0 +1,69 @@
+
+==================================================
+PROJECT 3: SUSPICIOUS POWERSHELL INVESTIGATION
+==================================================
+
+1. POWERSHELL PROCESS DETECTION
+
+index=* EventCode=4688
+| search powershell.exe
+| table _time Account_Name New_Process_Name Process_Command_Line Creator_Process_Name host
+| sort -_time
+
+
+2. POWERSHELL COMMAND IDENTIFICATION
+
+index=* EventCode=4688
+| search powershell.exe
+| rex field=Process_Command_Line "(?i)(?<PSCommand>Get-[A-Za-z]+)"
+| stats count by PSCommand
+| sort -count
+
+
+3. SUSPICIOUS POWERSHELL FLAGS
+
+index=* EventCode=4688
+| eval cmd=lower(Process_Command_Line)
+| where like(cmd,"%encodedcommand%") OR like(cmd,"% -executionpolicy bypass%") OR like(cmd,"% -windowstyle hidden%")
+| table _time Account_Name Process_Command_Line Creator_Process_Name
+
+
+4. POWERSHELL FALSE POSITIVE REVIEW
+
+index=* EventCode=4688
+| search powershell.exe
+| table _time Account_Name Process_Command_Line Creator_Process_Name
+| sort -_time
+
+
+5. NO PROFILE POWERSHELL EXECUTION
+
+index=* EventCode=4688
+| search Process_Command_Line="*-NoProfile*"
+| table _time Account_Name Process_Command_Line Creator_Process_Name
+| sort -_time
+
+
+6. POWERSHELL PARENT-CHILD DETECTION
+
+index=* EventCode=4688
+| where like(lower(New_Process_Name),"%powershell.exe%")
+| where like(lower(Creator_Process_Name),"%powershell.exe%")
+| table _time New_Process_Name Creator_Process_Name Process_Command_Line
+| sort -_time
+
+
+7. ENCODED POWERSHELL DETECTION
+
+index=* EventCode=4688
+| search Process_Command_Line="*-EncodedCommand*"
+| table _time Account_Name Process_Command_Line Creator_Process_Name host
+| sort -_time
+
+
+8. ENCODED POWERSHELL ALERT QUERY
+
+index=* EventCode=4688
+| search Process_Command_Line="*-EncodedCommand*"
+| stats count by Account_Name, host
+
