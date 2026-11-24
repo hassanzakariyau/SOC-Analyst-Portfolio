@@ -1,0 +1,193 @@
+==================================================
+01 — TOTAL SECURITY EVENTS
+==================================================
+
+index=main
+| stats count AS Total_Events
+
+
+==================================================
+02 — FAILED LOGIN ATTEMPTS
+==================================================
+
+index=main sourcetype="XmlWinEventLog:Security"
+| spath input=_raw output=EventID path=Event.System.EventID
+| search EventID=4625
+| stats count AS Failed_Login_Attempts
+
+
+==================================================
+03 — FAILED LOGIN ATTEMPTS OVER TIME
+==================================================
+
+index=main sourcetype="XmlWinEventLog:Security"
+| spath input=_raw output=EventID path=Event.System.EventID
+| search EventID=4625
+| timechart span=1h count AS Failed_Login_Attempts
+
+
+==================================================
+04 — TOP 10 WINDOWS SECURITY EVENTS
+==================================================
+
+index=main sourcetype="XmlWinEventLog:Security"
+| spath input=_raw output=EventID path=Event.System.EventID
+| stats count by EventID
+| sort -count
+| head 10
+
+
+==================================================
+05 — FAILED LOGIN ATTEMPTS BY USER ACCOUNT
+==================================================
+
+index=main sourcetype="XmlWinEventLog:Security"
+| spath input=_raw output=EventID path=Event.System.EventID
+| search EventID=4625
+| rex field=_raw "<Data Name='TargetUserName'>(?<Username>[^<]+)</Data>"
+| stats count by Username
+| sort -count
+
+
+==================================================
+06 — FAILED LOGIN ATTEMPTS BY SOURCE IP
+==================================================
+
+index=main sourcetype="XmlWinEventLog:Security"
+| spath input=_raw output=EventID path=Event.System.EventID
+| search EventID=4625
+| rex field=_raw "<Data Name='IpAddress'>(?<Source_IP>[^<]+)</Data>"
+| stats count by Source_IP
+| sort -count
+
+
+==================================================
+07 — SUCCESSFUL LOGINS BY USER ACCOUNT
+==================================================
+
+index=main sourcetype="XmlWinEventLog:Security"
+| spath input=_raw output=EventID path=Event.System.EventID
+| search EventID=4624
+| rex field=_raw "<Data Name='TargetUserName'>(?<Username>[^<]+)</Data>"
+| stats count by Username
+| sort -count
+
+
+==================================================
+08 — PRIVILEGED ACCOUNT ACTIVITY
+==================================================
+
+index=main sourcetype="XmlWinEventLog:Security"
+| spath input=_raw output=EventID path=Event.System.EventID
+| search EventID=4672
+| rex field=_raw "<Data Name='SubjectUserName'>(?<Username>[^<]+)</Data>"
+| stats count by Username
+| sort -count
+
+
+==================================================
+09 — TOP 15 EXECUTED PROCESSES
+==================================================
+
+index=main sourcetype="XmlWinEventLog:Security"
+| spath input=_raw output=EventID path=Event.System.EventID
+| search EventID=4688
+| rex field=_raw "<Data Name='NewProcessName'>(?<Process_Name>[^<]+)</Data>"
+| stats count by Process_Name
+| sort -count
+| head 15
+
+
+==================================================
+10 — WINDOWS DEFENDER THREAT DETECTIONS
+==================================================
+
+index=main sourcetype="XmlWinEventLog:Microsoft-Windows-Windows Defender/Operational"
+| spath input=_raw output=EventID path=Event.System.EventID
+| search EventID=1116
+| stats count AS Threat_Detections
+
+
+==================================================
+11 — DETECTED THREAT DETAILS
+==================================================
+
+index=main sourcetype="XmlWinEventLog:Microsoft-Windows-Windows Defender/Operational"
+| spath input=_raw output=EventID path=Event.System.EventID
+| search EventID=1116
+| rex field=_raw "<Data Name='Threat Name'>(?<Threat_Name>[^<]+)</Data>"
+| rex field=_raw "<Data Name='Path'>(?<Threat_Path>[^<]+)</Data>"
+| table _time Threat_Name Threat_Path
+
+
+==================================================
+12 — WINDOWS DEFENDER REMEDIATION ACTIONS
+==================================================
+
+index=main sourcetype="XmlWinEventLog:Microsoft-Windows-Windows Defender/Operational"
+| spath input=_raw output=EventID path=Event.System.EventID
+| search EventID=1117
+| stats count AS Remediation_Actions
+
+
+==================================================
+13 — WINDOWS SECURITY EVENTS OVER TIME
+==================================================
+
+index=main sourcetype="XmlWinEventLog:Security"
+| timechart span=1h count
+
+
+==================================================
+14 — TOP 10 WINDOWS SYSTEM EVENTS
+==================================================
+
+index=main sourcetype="XmlWinEventLog:System"
+| spath input=_raw output=EventID path=Event.System.EventID
+| stats count by EventID
+| sort -count
+| head 10
+
+
+==================================================
+15 — TOP 10 APPLICATION EVENTS
+==================================================
+
+index=main sourcetype="XmlWinEventLog:Application"
+| spath input=_raw output=EventID path=Event.System.EventID
+| stats count by EventID
+| sort -count
+| head 10
+
+
+==================================================
+16 — SUCCESSFUL LOGONS BY LOGON TYPE
+==================================================
+
+index=main sourcetype="XmlWinEventLog:Security"
+| spath input=_raw output=EventID path=Event.System.EventID
+| search EventID=4624
+| rex field=_raw "<Data Name='LogonType'>(?<LogonType>[^<]+)</Data>"
+| stats count by LogonType
+
+
+==================================================
+17 — FAILED LOGONS BY LOGON TYPE
+==================================================
+
+index=main sourcetype="XmlWinEventLog:Security"
+| spath input=_raw output=EventID path=Event.System.EventID
+| search EventID=4625
+| rex field=_raw "<Data Name='LogonType'>(?<LogonType>[^<]+)</Data>"
+| stats count by LogonType
+
+
+==================================================
+18 — TOP 10 WINDOWS DEFENDER EVENTS
+==================================================
+
+index=main sourcetype="XmlWinEventLog:Microsoft-Windows-Windows Defender/Operational"
+| spath input=_raw output=EventID path=Event.System.EventID
+| stats count by EventID
+| sort -count
+| head 10
